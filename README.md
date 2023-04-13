@@ -1,2 +1,2 @@
-# coremark-enclave
-Simple enclave that implements the coremark benchmark
+# enclave_skeleton
+Simple infrastructure to run an enclave
