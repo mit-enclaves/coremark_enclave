@@ -1,0 +1,83 @@
+# Copyright 2018 Embedded Microprocessor Benchmark Consortium (EEMBC)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# Original Author: Shay Gal-on
+
+# Make sure the default target is to simply build and run the benchmark.
+RSTAMP = v1.0
+
+PORT_DIR=$(ENCLAVE_SRC_DIR)/riscv
+
+vpath %.c $(PORT_DIR)
+vpath %.h $(PORT_DIR)
+vpath %.mak $(PORT_DIR)
+include $(PORT_DIR)/core_portme.mak
+
+ifndef ITERATIONS
+ITERATIONS=0
+endif
+ifdef REBUILD
+FORCE_REBUILD=force_rebuild
+endif
+
+E_CFLAGS += -DITERATIONS=$(ITERATIONS)
+
+CORE_FILES = core_list_join core_main core_matrix core_state core_util
+ORIG_SRCS = $(addprefix $(ENCLAVE_SRC_DIR)/, $(addsuffix .c,$(CORE_FILES))) 
+ASM_SRCS = $(ENCLAVE_SRC_DIR)/enclave_entry.S $(ENCLAVE_SRC_DIR)/enclave_stack.S 
+SRCS = $(ORIG_SRCS) $(PORT_SRCS) $(ASM_SRCS)
+OBJS = $(addprefix $(BUILD_DIR)/,$(addsuffix $(OEXT),$(CORE_FILES)) $(PORT_OBJS))
+OUTNAME = coremark$(EXE)
+OUTNAMEBIN = coremark$(BIN)
+OUTELF = $(BUILD_DIR)/$(OUTNAME)
+OUTBIN = $(BUILD_DIR)/$(OUTNAMEBIN)
+LOUTCMD = $(OFLAG) $(OUTELF) $(LFLAGS_END)
+OUTCMD = $(OUTFLAG) $(OUTELF) $(LFLAGS_END)
+
+HEADERS = $(ENCLAVE_SRC_DIR)/coremark.h 
+CHECK_FILES = $(ORIG_SRCS) $(HEADERS)
+
+ENCLAVE_INCLUDES := \
+	$(PLATFORM_DIR) \
+	$(API_DIR) \
+	$(INFRA_DIR) \
+	$(ENCLAVE_SRC_DIR) \
+	$(QUEUE_SRC_DIR) \
+
+.PHONY: compile link
+
+compile: $(BUILD_DIR) $(SRCS) $(HEADERS)
+	$(CC) $(E_CFLAGS) $(XCFLAGS) $(addprefix -I , $(ENCLAVE_INCLUDES)) $(SRCS) $(OUTCMD)
+link: compile 
+	@echo "Link performed along with compile"
+
+$(OUTELF): $(SRCS) $(HEADERS) Makefile core_portme.mak $(EXTRA_DEPENDS) $(FORCE_REBUILD)
+	$(MAKE) link
+
+PARAM1=$(PORT_PARAMS) 0x0 0x0 0x66 $(ITERATIONS)
+PARAM2=$(PORT_PARAMS) 0x3415 0x3415 0x66 $(ITERATIONS)
+PARAM3=$(PORT_PARAMS) 8 8 8 $(ITERATIONS)
+
+run1.log-PARAM=$(PARAM1) 7 1 2000
+run2.log-PARAM=$(PARAM2) 7 1 2000 
+run3.log-PARAM=$(PARAM3) 7 1 1200
+
+ENCLAVE_ELF := $(OUTELF)
+ENCLAVE_BIN := $(OUTBIN)
+
+$(ENCLAVE_BIN): $(ENCLAVE_ELF)
+	$(OBJCOPY) -O binary --only-section=.text --only-section=.rodata --only-section=.srodata* --only-section=.data --only-section=.sdata --only-section=.bss --only-section=.sbss --set-section-flags .bss=alloc,load,contents --set-section-flags .sbss=alloc,load,contents $< $@
+
+.PHONY: enclave
+enclave : $(ENCLAVE_BIN)

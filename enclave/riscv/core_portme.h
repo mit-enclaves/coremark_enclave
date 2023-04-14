@@ -43,7 +43,8 @@ Original Author: Shay Gal-on
 */
 
 #if (HAS_TIME_H != 1)
-#define CLOCKS_PER_SEC 1
+//#define CLOCKS_PER_SEC 40000000 //40 MHz
+#define CLOCKS_PER_SEC 2000000000 // 2 GHz
 #endif
 
 #ifndef USE_CLOCK
@@ -63,7 +64,7 @@ Original Author: Shay Gal-on
 #define HAS_PRINTF 1
 #endif
 
-#include "../sbi/console.h"
+#include <sbi/console.h>
 
 #define printf printm
 
@@ -103,6 +104,7 @@ typedef int32_t        ee_s32;
 typedef double         ee_f32;
 typedef uint8_t        ee_u8;
 typedef uint32_t       ee_u32;
+typedef uint64_t       ee_u64;
 typedef uintptr_t      ee_ptr_int;
 typedef size_t         ee_size_t;
 #define NULL ((void *)0)
@@ -115,8 +117,8 @@ typedef size_t         ee_size_t;
 /* Configuration : CORE_TICKS
         Define type of return from the timing functions.
  */
-#define CORETIMETYPE ee_u32
-typedef ee_u32 CORE_TICKS;
+#define CORETIMETYPE ee_u64
+typedef ee_u64 CORE_TICKS;
 
 /* Configuration : SEED_METHOD
         Defines method to get seed values that cannot be computed at compile

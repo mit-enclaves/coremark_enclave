@@ -15,7 +15,7 @@ limitations under the License.
 
 Original Author: Shay Gal-on
 */
-#include "coremark.h"
+#include <coremark.h>
 #include "core_portme.h"
 
 #if VALIDATION_RUN

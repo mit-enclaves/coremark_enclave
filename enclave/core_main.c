@@ -21,6 +21,7 @@ Original Author: Shay Gal-on
    initial parameters, tun t he benchmark and report the results.
 */
 #include "coremark.h"
+#include <api_enclave.h>
 
 /* Function: iterate
         Run the benchmark for a specified number of iterations.
@@ -438,5 +439,5 @@ for (i = 0; i < MULTITHREAD; i++)
     /* And last call any target specific code for finalizing */
     portable_fini(&(results[0].port));
 
-    return MAIN_RETURN_VAL;
+    sm_exit_enclave();
 }
