@@ -73,10 +73,9 @@ run1.log-PARAM=$(PARAM1) 7 1 2000
 run2.log-PARAM=$(PARAM2) 7 1 2000 
 run3.log-PARAM=$(PARAM3) 7 1 1200
 
-ENCLAVE_ELF := $(OUTELF)
 ENCLAVE_BIN := $(OUTBIN)
 
-$(ENCLAVE_BIN): $(ENCLAVE_ELF)
+$(ENCLAVE_BIN): $(OUTELF)
 	$(OBJCOPY) -O binary --only-section=.text --only-section=.rodata --only-section=.srodata* --only-section=.data --only-section=.sdata --only-section=.bss --only-section=.sbss --set-section-flags .bss=alloc,load,contents --set-section-flags .sbss=alloc,load,contents $< $@
 
 .PHONY: enclave

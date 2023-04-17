@@ -42,10 +42,8 @@ Original Author: Shay Gal-on
         and implementation of functions thereof.
 */
 
-#if (HAS_TIME_H != 1)
-//#define CLOCKS_PER_SEC 40000000 //40 MHz
-#define CLOCKS_PER_SEC 2000000000 // 2 GHz
-#endif
+#define CLOCKS_PER_SEC 40000000 //40 MHz
+//#define CLOCKS_PER_SEC 2000000000 // 2 GHz
 
 #ifndef USE_CLOCK
 #define USE_CLOCK 0
