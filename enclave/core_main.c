@@ -23,6 +23,10 @@ Original Author: Shay Gal-on
 #include "coremark.h"
 #include <api_enclave.h>
 
+#if (DEBUG_ENCLAVE == 1)
+#include "../sbi/console.h"
+#endif
+
 /* Function: iterate
         Run the benchmark for a specified number of iterations.
 
@@ -34,6 +38,10 @@ Original Author: Shay Gal-on
         Returns:
         NULL.
 */
+
+#define riscv_perf_cntr_begin() asm volatile("csrwi 0x801, 1")
+#define riscv_perf_cntr_end() asm volatile("csrwi 0x801, 0")
+
 static ee_u16 list_known_crc[]   = { (ee_u16)0xd4b0,
                                    (ee_u16)0x3340,
                                    (ee_u16)0x6a79,
@@ -61,6 +69,8 @@ iterate(void *pres)
     res->crcmatrix           = 0;
     res->crcstate            = 0;
 
+    ee_u64 tick = 0;
+
     for (i = 0; i < iterations; i++)
     {
         crc      = core_bench_list(res, 1);
@@ -70,6 +80,9 @@ iterate(void *pres)
         if (i == 0)
             res->crclist = res->crc;
     }
+
+    res->tick = tick;
+
     return NULL;
 }
 
@@ -263,7 +276,11 @@ for (i = 0; i < MULTITHREAD; i++)
         results[0].iterations *= 1 + 10 / divisor;
     }
     /* perform actual benchmark */
+    printm("Num Iterations: %d\n", results[0].iterations);
+    results[0].iterations = 2000;
+
     start_time();
+    riscv_perf_cntr_begin();
 #if (MULTITHREAD > 1)
     if (default_num_contexts > MULTITHREAD)
     {
@@ -282,6 +299,7 @@ for (i = 0; i < MULTITHREAD; i++)
 #else
     iterate(&results[0]);
 #endif
+    riscv_perf_cntr_end();
     stop_time();
     total_time = get_time();
     /* get a function of the input to report */
