@@ -69,8 +69,6 @@ iterate(void *pres)
     res->crcmatrix           = 0;
     res->crcstate            = 0;
 
-    ee_u64 tick = 0;
-
     for (i = 0; i < iterations; i++)
     {
         crc      = core_bench_list(res, 1);
@@ -80,8 +78,6 @@ iterate(void *pres)
         if (i == 0)
             res->crclist = res->crc;
     }
-
-    res->tick = tick;
 
     return NULL;
 }
