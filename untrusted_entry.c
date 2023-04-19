@@ -157,7 +157,7 @@ void untrusted_entry(int core_id, uintptr_t fdt_addr) {
   uint64_t size_enclave_metadata = sm_enclave_metadata_pages(num_mailboxes);
 
   thread_id_t thread_id = enclave_id + (size_enclave_metadata * PAGE_SIZE);
-  uint64_t timer_limit = 0xeffffffffff;
+  uint64_t timer_limit = 0x100;
 
   printm("Thread Load\n");
 
