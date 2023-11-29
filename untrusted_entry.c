@@ -8,14 +8,33 @@ extern uintptr_t region3;
 extern uintptr_t enclave_start;
 extern uintptr_t enclave_end;
 
+#define SHARED_MEM_SYNC (0x90000000)
+
+#define STATE_0 1
+#define STATE_1 2
+#define STATE_2 3
+#define STATE_3 4
+
 #define EVBASE 0x20000000
 
 void untrusted_entry(int core_id, uintptr_t fdt_addr) {
+  volatile int *flag = (int *) SHARED_MEM_SYNC;
+  console_init();
+
   if(core_id != 0) {
     printm("Core n %d\n\n", core_id);
-    test_completed();
+    while(true) {
+      if(*flag == STATE_1) {
+       api_result_t res = sm_region_update();
+       if(res == MONITOR_OK) {
+        *flag = STATE_2;
+       }
+      }
+    };
   }
 
+  *flag = STATE_0;
+  
   //uint64_t region1_id = addr_to_region_id((uintptr_t) &region1);
   uint64_t region2_id = addr_to_region_id((uintptr_t) &region2);
   uint64_t region3_id = addr_to_region_id((uintptr_t) &region3);
@@ -31,7 +50,26 @@ void untrusted_entry(int core_id, uintptr_t fdt_addr) {
     printm("sm_region_block FAILED with error code %d\n\n", result);
     test_completed();
   }
+  
+  printm("Region block\n");
 
+  result = sm_region_block(region2_id);
+  if(result != MONITOR_OK) {
+    printm("sm_region_block FAILED with error code %d\n\n", result);
+    test_completed();
+  }
+    
+  *flag = STATE_1;
+  while(*flag != STATE_2);
+
+  printm("Region free\n");
+
+  result = sm_region_free(region2_id);
+  if(result != MONITOR_OK) {
+    printm("sm_region_free FAILED with error code %d\n\n", result);
+    test_completed();
+  }
+  
   printm("Region free\n");
 
   result = sm_region_free(region3_id);
@@ -55,26 +93,9 @@ void untrusted_entry(int core_id, uintptr_t fdt_addr) {
 
   printm("Enclave Create\n");
 
-
   result = sm_enclave_create(enclave_id, EVBASE, REGION_MASK, num_mailboxes, true);
   if(result != MONITOR_OK) {
     printm("sm_enclave_create FAILED with error code %d\n\n", result);
-    test_completed();
-  }
-
-  printm("Region block\n");
-
-  result = sm_region_block(region2_id);
-  if(result != MONITOR_OK) {
-    printm("sm_region_block FAILED with error code %d\n\n", result);
-    test_completed();
-  }
-
-  printm("Region free\n");
-
-  result = sm_region_free(region2_id);
-  if(result != MONITOR_OK) {
-    printm("sm_region_free FAILED with error code %d\n\n", result);
     test_completed();
   }
 

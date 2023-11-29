@@ -5,16 +5,20 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include "../platform/platform_lock.h"
+#include <platform_lock.h>
 
-static volatile platform_lock_t putstring_lock;
+static volatile platform_lock_t console_lock;
+
+void console_init(){
+  platform_lock_release(&console_lock);
+}
 
 void putstring(const char* s)
 {
-  while(!platform_lock_acquire(&putstring_lock)) {};
+  while(!platform_lock_acquire(&console_lock)) {};
   while (*s)
     console_putchar(*s++);
-  platform_lock_release(&putstring_lock);
+  platform_lock_release(&console_lock);
 }
 
 int vsnprintf(char* out, size_t n, const char* s, va_list vl)
